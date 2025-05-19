@@ -1,0 +1,1499 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cummings Karate Grading App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --primary-color: #c8102e;
+      --secondary-color: #f5f5f5;
+      --border-color: #ccc;
+      --text-color: #333;
+      --highlight-color: #4CAF50;
+      --button-hover: #e0e0e0;
+      --active-color: #a00d26;
+      --grade-row-bg: #f0f0f0;
+      --complete-btn-color: #d9534f;
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      color: var(--text-color);
+    }
+    
+    header { 
+      background: var(--primary-color); 
+      color: white; 
+      padding: 1em; 
+      text-align: center; 
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .section { 
+      padding: 0.5em 1em; 
+      background: var(--secondary-color); 
+      border-bottom: 1px solid var(--border-color); 
+      margin-bottom: 0.5em;
+    }
+    
+    .section h2 { 
+      margin: 0.5em 0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .section h2::after {
+      content: "▼";
+      font-size: 0.8em;
+      transition: transform 0.3s;
+    }
+    
+    .section h2.collapsed::after {
+      transform: rotate(-90deg);
+    }
+    
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .section-content.collapsed {
+      max-height: 0 !important;
+      padding: 0 !important;
+    }
+    
+    label, input, button, select, textarea { 
+      font-size: 1em; 
+      margin: 0.5em 0; 
+      display: block; 
+      width: 100%; 
+      max-width: 500px; 
+    }
+    
+    button, select {
+      padding: 0.6em 1em;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:hover, select:hover {
+      background: var(--button-hover);
+    }
+    
+    button.primary {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    button.primary:hover {
+      background: var(--active-color);
+    }
+    
+    button.secondary {
+      background: var(--secondary-color);
+    }
+    
+    .grid-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 1em; 
+    }
+    
+    .grid-table th, .grid-table td { 
+      border: 1px solid var(--border-color); 
+      padding: 0.5em; 
+      text-align: center; 
+    }
+    
+    .skill-text { 
+      font-size: 0.9em; 
+      color: #666; 
+    }
+    
+    .student-card { 
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 1em; 
+      margin-bottom: 1em;
+      background: white;
+    }
+    
+    .rating-buttons { 
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      margin: 0.5em 0;
+    }
+    
+    .rating-buttons button { 
+      margin: 0;
+      flex: 1;
+      min-width: 80px;
+    }
+    
+    .rating-buttons .selected { 
+      background-color: var(--text-color); 
+      color: white; 
+      border-color: var(--text-color);
+    }
+    
+    .quick-jump { 
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+      margin-bottom: 1em;
+      gap: 0.5em;
+    }
+    
+    #exportBtn { 
+      margin: 1em; 
+      font-size: 1em; 
+    }
+    
+    .progress-bar { 
+      text-align: center; 
+      margin: 1em 0; 
+      padding: 0.5em; 
+    }
+    
+    .progress-dot { 
+      display: inline-block; 
+      width: 12px; 
+      height: 12px; 
+      border-radius: 50%; 
+      background: var(--border-color); 
+      margin: 0 3px; 
+      cursor: pointer; 
+    }
+    
+    .progress-dot.active { 
+      background: var(--primary-color); 
+    }
+    
+    .save-indicator { 
+      position: fixed; 
+      bottom: 10px; 
+      right: 10px; 
+      background: var(--highlight-color); 
+      color: white; 
+      padding: 0.5em 1em; 
+      border-radius: 4px; 
+      display: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    .grid-table-container { 
+      overflow-x: auto; 
+      width: 100%; 
+      margin-bottom: 1em;
+    }
+    
+    .search-box { 
+      margin: 1em 0; 
+      padding: 0.8em; 
+      width: 100%; 
+      max-width: 500px; 
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .summary-view { 
+      background: #f0f8ff; 
+      padding: 1em; 
+      margin: 1em 0; 
+      border-radius: 4px; 
+      border: 1px solid var(--border-color);
+    }
+    
+    .complete-section { 
+      text-align: center; 
+      margin: 1em 0; 
+      padding: 1em;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .multiselect {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+    }
+    
+    .select-box {
+      position: relative;
+    }
+    
+    .select-box select {
+      width: 100%;
+      padding: 0.6em 1em;
+      border-radius: 4px;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.7em center;
+      background-size: 1em;
+    }
+    
+    #checkboxes {
+      display: none;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: white;
+      margin-top: 0.3em;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 0.5em;
+    }
+    
+    #checkboxes label {
+      display: block;
+      padding: 0.5em;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    
+    #checkboxes label:hover {
+      background: var(--button-hover);
+    }
+    
+    #checkboxes input {
+      margin-right: 0.5em;
+    }
+    
+    .multiselect-actions {
+      display: flex;
+      gap: 0.5em;
+      margin-top: 0.5em;
+    }
+    
+    .multiselect-actions button {
+      flex: 1;
+      padding: 0.3em;
+      font-size: 0.9em;
+    }
+    
+    .manual-student-entry {
+      background: white;
+      padding: 1em;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      margin: 1em 0;
+    }
+    
+    .complete-row {
+      background-color: #f0f8ff;
+    }
+    
+    .complete-row td {
+      padding: 0.8em !important;
+      text-align: center;
+    }
+    
+    .complete-row button {
+      width: 100%;
+      white-space: nowrap;
+    }
+    
+    .complete-btn {
+      background-color: white !important;
+      color: var(--text-color) !important;
+      border-color: var(--border-color) !important;
+    }
+    
+    .complete-btn.completed {
+      background-color: var(--complete-btn-color) !important;
+      color: white !important;
+      border-color: var(--complete-btn-color) !important;
+    }
+    
+    .toggle-btn {
+      padding: 0.6em 1em;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 0.5em 0;
+    }
+    
+    .toggle-btn.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    
+    .toggle-btn.active:hover {
+      background: var(--active-color);
+    }
+    
+    .file-input-container {
+      margin: 1em 0;
+    }
+    
+    .file-input-container label {
+      display: block;
+      margin-bottom: 0.5em;
+    }
+    
+    .file-input-container input[type="file"] {
+      display: none;
+    }
+    
+    .file-input-container .file-input-button {
+      display: inline-block;
+      padding: 0.6em 1em;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    
+    .file-input-container .file-input-button:hover {
+      background: var(--button-hover);
+    }
+    
+    .file-input-container .file-name {
+      margin-top: 0.5em;
+      font-size: 0.9em;
+      color: #666;
+    }
+    
+    .collapsible-section {
+      margin: 1em 0;
+    }
+    
+    .collapsible-section h3 {
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0.5em 0;
+    }
+    
+    .collapsible-section h3::after {
+      content: "▼";
+      font-size: 0.8em;
+      transition: transform 0.3s;
+    }
+    
+    .collapsible-section h3.collapsed::after {
+      transform: rotate(-90deg);
+    }
+    
+    .collapsible-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .collapsible-content.collapsed {
+      max-height: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .grade-skill-row {
+      background-color: var(--grade-row-bg);
+    }
+    
+    .clear-data-warning {
+      background-color: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 0.5em 1em;
+      margin: 1em 0;
+      display: none;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: white;
+      padding: 2em;
+      border-radius: 5px;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1em;
+      margin-top: 1em;
+    }
+    
+    @media (max-width: 768px) {
+      label, input, button, select, textarea { 
+        width: 100%; 
+        margin: 0.5em 0; 
+      }
+      
+      .grid-table th, .grid-table td { 
+        padding: 0.3em; 
+        font-size: 0.9em; 
+      }
+      
+      .rating-buttons button { 
+        padding: 0.5em; 
+        font-size: 0.9em; 
+      }
+      
+      .student-card { 
+        padding: 0.8em; 
+      }
+      
+      .quick-jump button { 
+        padding: 0.5em; 
+        font-size: 0.9em; 
+      }
+      
+      .section {
+        padding: 0.5em;
+      }
+      
+      .multiselect-actions {
+        flex-direction: column;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .student-card { 
+        width: 48%; 
+        float: left; 
+        margin: 0 1% 1em 0; 
+      }
+      
+      .student-card:nth-child(2n) { 
+        margin-right: 0; 
+      }
+      
+      .student-card:nth-child(2n+1) { 
+        clear: left; 
+      }
+      
+      .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cummings Karate Grading App</h1>
+  </header>
+
+  <div class="section" id="settingsSection">
+    <h2 onclick="toggleSection('settingsContent')">Settings</h2>
+    <div id="settingsContent" class="section-content">
+      <label>Instructor Name: <input type="text" id="instructorName" onchange="checkForDataReset()" /></label>
+      
+      <label>Grade Being Assessed: 
+        <select id="gradeLevel" onchange="checkForDataReset()">
+          <option value="">-- Select Grade --</option>
+          <option value="Beginner Juniors">Beginner Juniors</option>
+          <option value="Intermediate Juniors">Intermediate Juniors</option>
+          <option value="Seniors Karate">Seniors Karate</option>
+          <option value="Kubudo">Kubudo</option>
+        </select>
+      </label>
+      
+      <label>Date: <input type="date" id="assessmentDate" onchange="checkForDataReset()" /></label>
+      
+      <div id="dataResetWarning" class="clear-data-warning">
+        Changing these settings will clear all current grading data. Export your data first if needed.
+      </div>
+      
+      <div class="file-input-container">
+        <label>Upload Students CSV:</label>
+        <label class="file-input-button">
+          Choose File
+          <input type="file" id="studentsFile" accept=".csv" onchange="updateFileName('studentsFile', 'studentsFileName')" />
+        </label>
+        <div id="studentsFileName" class="file-name">No file chosen</div>
+      </div>
+      
+      <div class="file-input-container">
+        <label>Upload Criteria CSV:</label>
+        <label class="file-input-button">
+          Choose File
+          <input type="file" id="criteriaFile" accept=".csv" onchange="updateFileName('criteriaFile', 'criteriaFileName')" />
+        </label>
+        <div id="criteriaFileName" class="file-name">No file chosen</div>
+      </div>
+      
+      <button class="primary" onclick="loadCSV()">Load Data</button>
+      <button class="secondary" onclick="showClearDataModal()">Clear All Data</button>
+      
+      <div class="collapsible-section">
+        <h3 onclick="toggleCollapsible('addStudentSection')">Add Single Student</h3>
+        <div id="addStudentSection" class="collapsible-content collapsed">
+          <div class="manual-student-entry">
+            <label>Student Name: <input type="text" id="manualStudentName" /></label>
+            <label>Student Grade: 
+              <select id="manualStudentGrade">
+                <option value="HACHIKYU (8)">HACHIKYU (8)</option>
+                <option value="NANAKYU (7)">NANAKYU (7)</option>
+                <option value="ROKKYU (6)">ROKKYU (6)</option>
+                <option value="GOKYU (5)">GOKYU (5)</option>
+                <option value="YONKYU (4)">YONKYU (4)</option>
+                <option value="SANKYU (3)">SANKYU (3)</option>
+                <option value="NIKYU (2)">NIKYU (2)</option>
+                <option value="IKKYU (1)">IKKYU (1)</option>
+                <option value="SHODAN (1)">SHODAN (1)</option>
+                <option value="NIDAN (2)">NIDAN (2)</option>
+                <option value="SANDAN (3)">SANDAN (3)</option>
+              </select>
+            </label>
+            <button class="primary" onclick="addManualStudent()">Add Student</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="collapsible-section">
+        <h3 onclick="toggleCollapsible('editCriteriaSection')">Edit Grading Criteria</h3>
+        <div id="editCriteriaSection" class="collapsible-content collapsed">
+          <div id="criteriaList"></div>
+          <button class="primary" onclick="addNewCriterion()">Add New Criterion</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="displaySection">
+    <h2 onclick="toggleSection('displayContent')">Display</h2>
+    <div id="displayContent" class="section-content">
+      <button id="widescreenBtn" class="toggle-btn" onclick="toggleWidescreen()">Tablet Mode</button>
+      <label>
+        Filter by Grade:
+        <div class="multiselect">
+          <div class="select-box">
+            <select id="gradeFilter" onchange="updateGradeFilter()">
+              <option value="All">All Grades</option>
+            </select>
+          </div>
+          <div id="checkboxes"></div>
+          <div class="multiselect-actions">
+            <button class="secondary" onclick="selectAllGrades()">Select All</button>
+            <button class="secondary" onclick="deselectAllGrades()">Deselect All</button>
+          </div>
+        </div>
+      </label>
+      <button id="toggleCommentsBtn" class="toggle-btn active" onclick="toggleComments()">Show Comments</button>
+      <input type="text" id="searchBox" class="search-box" placeholder="Search students..." oninput="renderApp()">
+    </div>
+  </div>
+
+  <div class="section" id="gradingSection">
+    <h2 onclick="toggleSection('gradingContent')">Grading</h2>
+    <div id="gradingContent" class="section-content">
+      <div id="appContainer"></div>
+    </div>
+  </div>
+
+  <div class="section" id="summarySection">
+    <h2 onclick="toggleSection('summaryContent')">Summary View</h2>
+    <div id="summaryContent" class="section-content">
+      <div id="summaryContainer" class="summary-view"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding: 1em;">
+    <button id="exportBtn" class="primary" onclick="exportCSV()">Export CSV</button>
+    <button class="secondary" onclick="createBackup()">Create Backup</button>
+  </div>
+
+  <div id="clearDataModal" class="modal">
+    <div class="modal-content">
+      <h3>Confirm Clear All Data</h3>
+      <p>Are you sure you want to clear all grading data? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="secondary" onclick="hideModal()">Cancel</button>
+        <button class="primary" onclick="clearData(true)">Clear Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let students = [], criteria = [], skillsByGrade = [], widescreen = false, showComments = true;
+    let touchStartX = 0, touchEndX = 0;
+    let currentCriteriaIndex = 0;
+    let selectedGrades = new Set();
+    let backups = [];
+    let settingsChanged = false;
+
+    // Initialize the app
+    window.onload = function() {
+      // Set default date to today
+      document.getElementById('assessmentDate').valueAsDate = new Date();
+      
+      // Load any saved settings
+      loadSettings();
+      loadSavedData();
+      setupSectionToggles();
+      
+      // Close multiselect when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.multiselect')) {
+          document.getElementById('checkboxes').style.display = 'none';
+        }
+      });
+      
+      // Initialize toggle buttons
+      updateToggleButtons();
+      renderSummary();
+      
+      // Add beforeunload event to warn about unsaved changes
+      window.addEventListener('beforeunload', function(e) {
+        if (settingsChanged) {
+          e.preventDefault();
+          e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        }
+      });
+    };
+
+    function loadSettings() {
+      const savedSettings = localStorage.getItem('karateGradingSettings');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        document.getElementById('instructorName').value = settings.instructorName || '';
+        document.getElementById('gradeLevel').value = settings.gradeLevel || '';
+        document.getElementById('assessmentDate').value = settings.assessmentDate || new Date().toISOString().split('T')[0];
+        document.getElementById('studentsFileName').textContent = settings.studentsFileName || 'No file chosen';
+        document.getElementById('criteriaFileName').textContent = settings.criteriaFileName || 'No file chosen';
+      }
+    }
+
+    function saveSettings() {
+      const settings = {
+        instructorName: document.getElementById('instructorName').value,
+        gradeLevel: document.getElementById('gradeLevel').value,
+        assessmentDate: document.getElementById('assessmentDate').value,
+        studentsFileName: document.getElementById('studentsFileName').textContent,
+        criteriaFileName: document.getElementById('criteriaFileName').textContent
+      };
+      localStorage.setItem('karateGradingSettings', JSON.stringify(settings));
+    }
+
+    function setupSectionToggles() {
+      // Collapse all sections except Grading by default
+      toggleSection('displayContent', true);
+      toggleSection('settingsContent', true);
+    }
+
+    function toggleSection(sectionId, forceCollapse = false) {
+      const section = document.getElementById(sectionId);
+      const header = section.parentElement.querySelector('h2');
+      
+      if (forceCollapse) {
+        section.classList.add('collapsed');
+        header.classList.add('collapsed');
+        return;
+      }
+      
+      section.classList.toggle('collapsed');
+      header.classList.toggle('collapsed');
+      
+      // Set max-height for smooth transition
+      if (!section.classList.contains('collapsed')) {
+        section.style.maxHeight = section.scrollHeight + "px";
+      }
+    }
+
+    function toggleCollapsible(sectionId) {
+      const section = document.getElementById(sectionId);
+      const header = section.parentElement.querySelector('h3');
+      
+      section.classList.toggle('collapsed');
+      header.classList.toggle('collapsed');
+      
+      // Set max-height for smooth transition
+      if (!section.classList.contains('collapsed')) {
+        section.style.maxHeight = section.scrollHeight + "px";
+      }
+    }
+
+    function updateFileName(inputId, displayId) {
+      const input = document.getElementById(inputId);
+      const display = document.getElementById(displayId);
+      if (input.files.length > 0) {
+        display.textContent = input.files[0].name;
+        settingsChanged = true;
+        saveSettings();
+      } else {
+        display.textContent = "No file chosen";
+      }
+    }
+
+    function updateToggleButtons() {
+      document.getElementById('widescreenBtn').classList.toggle('active', widescreen);
+      document.getElementById('toggleCommentsBtn').classList.toggle('active', showComments);
+    }
+
+    function toggleWidescreen() {
+      widescreen = !widescreen;
+      updateToggleButtons();
+      renderApp();
+    }
+
+    function toggleComments() {
+      showComments = !showComments;
+      updateToggleButtons();
+      renderApp();
+    }
+
+    function loadSavedData() {
+      const instructor = document.getElementById("instructorName").value || "instructor";
+      const grade = document.getElementById("gradeLevel").value || "ungraded";
+      const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+      
+      const dataKey = `${instructor}_${grade}_${date}`;
+      const savedData = localStorage.getItem(`karateGradingData_${dataKey}`);
+      
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.students && parsed.criteria && parsed.skillsByGrade) {
+          students = parsed.students;
+          criteria = parsed.criteria;
+          skillsByGrade = parsed.skillsByGrade;
+          populateGradeFilter();
+          renderApp();
+          renderCriteriaList();
+        }
+      }
+      
+      // Load backups
+      const savedBackups = localStorage.getItem(`karateGradingBackups_${dataKey}`);
+      if (savedBackups) {
+        backups = JSON.parse(savedBackups);
+      }
+    }
+
+    function parseCSV(text) {
+      return text.trim().split("\n").map(row => row.split(",").map(cell => cell.trim()));
+    }
+
+    function loadCSV() {
+      const studentFile = document.getElementById('studentsFile').files[0];
+      const criteriaFile = document.getElementById('criteriaFile').files[0];
+      
+      if (!criteriaFile) {
+        alert("Please upload the criteria file.");
+        return;
+      }
+
+      // Load criteria first
+      criteriaFile.text().then(text => {
+        const criteriaData = parseCSV(text);
+        const [cHeaders, ...cRows] = criteriaData;
+        criteria = cHeaders.slice(2);
+        skillsByGrade = cRows.map(r => ({ grade: r[0], skills: r.slice(2) }));
+
+        // Then load students if provided
+        if (studentFile) {
+          studentFile.text().then(text => {
+            const studentData = parseCSV(text);
+            const [_, ...sRows] = studentData;
+            
+            students = sRows.map(row => ({
+              name: row[0],
+              grade: row[1],
+              ratings: criteria.map(() => "Pass"),
+              comments: criteria.map(() => ""),
+              completed: criteria.map(() => false)
+            }));
+
+            // Try to merge with existing data
+            const instructor = document.getElementById("instructorName").value || "instructor";
+            const grade = document.getElementById("gradeLevel").value || "ungraded";
+            const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+            const dataKey = `${instructor}_${grade}_${date}`;
+            
+            const savedData = localStorage.getItem(`karateGradingData_${dataKey}`);
+            if (savedData) {
+              const parsed = JSON.parse(savedData);
+              if (parsed.students.length === students.length) {
+                students.forEach((student, i) => {
+                  student.ratings = parsed.students[i].ratings;
+                  student.comments = parsed.students[i].comments;
+                  student.completed = parsed.students[i].completed;
+                });
+              }
+            }
+
+            saveData();
+            saveSettings();
+            populateGradeFilter();
+            renderApp();
+            renderCriteriaList();
+          });
+        } else {
+          // No student file, just update with criteria
+          saveData();
+          saveSettings();
+          populateGradeFilter();
+          renderApp();
+          renderCriteriaList();
+        }
+      });
+    }
+
+    function addManualStudent() {
+      const name = document.getElementById('manualStudentName').value.trim();
+      const grade = document.getElementById('manualStudentGrade').value;
+      
+      if (!name) {
+        alert("Please enter a student name");
+        return;
+      }
+      
+      // Initialize with empty ratings if no criteria loaded yet
+      const initialRatings = criteria.length > 0 ? criteria.map(() => "Pass") : [];
+      const initialComments = criteria.length > 0 ? criteria.map(() => "") : [];
+      const initialCompleted = criteria.length > 0 ? criteria.map(() => false) : [];
+      
+      students.push({
+        name,
+        grade,
+        ratings: initialRatings,
+        comments: initialComments,
+        completed: initialCompleted
+      });
+      
+      document.getElementById('manualStudentName').value = '';
+      saveData();
+      populateGradeFilter();
+      renderApp();
+      renderSummary();
+    }
+
+    function showClearDataModal() {
+      document.getElementById('clearDataModal').style.display = 'flex';
+    }
+
+    function hideModal() {
+      document.getElementById('clearDataModal').style.display = 'none';
+    }
+
+    function clearData(force = false) {
+      hideModal();
+      
+      const instructor = document.getElementById("instructorName").value || "instructor";
+      const grade = document.getElementById("gradeLevel").value || "ungraded";
+      const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+      
+      const dataKey = `${instructor}_${grade}_${date}`;
+      localStorage.removeItem(`karateGradingData_${dataKey}`);
+      
+      students = [];
+      criteria = [];
+      skillsByGrade = [];
+      document.getElementById('appContainer').innerHTML = "";
+      document.getElementById('gradeFilter').innerHTML = '<option value="All">All Grades</option>';
+      document.getElementById('checkboxes').innerHTML = "";
+      document.getElementById('criteriaList').innerHTML = "";
+      document.getElementById('summaryContainer').innerHTML = "<h3>Summary View</h3>";
+      
+      // Clear file inputs
+      document.getElementById('studentsFile').value = '';
+      document.getElementById('criteriaFile').value = '';
+      document.getElementById('studentsFileName').textContent = 'No file chosen';
+      document.getElementById('criteriaFileName').textContent = 'No file chosen';
+      
+      // Save cleared state
+      saveSettings();
+    }
+
+    function checkForDataReset() {
+      settingsChanged = true;
+      document.getElementById('dataResetWarning').style.display = 'block';
+    }
+
+    function handleSettingsChange() {
+      if (settingsChanged && (students.length > 0 || criteria.length > 0)) {
+        if (confirm("Changing these settings will clear all current grading data. Are you sure you want to continue?")) {
+          clearData(true);
+          loadSavedData();
+          document.getElementById('dataResetWarning').style.display = 'none';
+          settingsChanged = false;
+          saveSettings();
+        } else {
+          // Revert the changes
+          loadSettings();
+        }
+      } else {
+        settingsChanged = true;
+        saveSettings();
+      }
+    }
+
+    // Set event listeners for settings fields
+    document.getElementById('instructorName').onchange = handleSettingsChange;
+    document.getElementById('gradeLevel').onchange = handleSettingsChange;
+    document.getElementById('assessmentDate').onchange = handleSettingsChange;
+
+    function populateGradeFilter() {
+      const grades = Array.from(new Set(students.map(s => s.grade)));
+      const gradeFilter = document.getElementById("gradeFilter");
+      const checkboxes = document.getElementById("checkboxes");
+      
+      // Clear existing options
+      gradeFilter.innerHTML = '';
+      checkboxes.innerHTML = '';
+      
+      // Add "All Grades" option first
+      const allOption = document.createElement("option");
+      allOption.value = "All";
+      allOption.textContent = "All Grades";
+      gradeFilter.appendChild(allOption);
+      
+      // Add all existing grades to both dropdown and checkboxes
+      grades.forEach(grade => {
+        // Add to dropdown
+        const option = document.createElement("option");
+        option.value = grade;
+        option.textContent = grade;
+        gradeFilter.appendChild(option);
+        
+        // Add to checkboxes
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = grade;
+        checkbox.onchange = function() {
+          updateSelectedGrades();
+        };
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(grade));
+        checkboxes.appendChild(label);
+      });
+      
+      // Initialize with all grades selected
+      selectAllGrades();
+    }
+
+    function renderCriteriaList() {
+      const container = document.getElementById("criteriaList");
+      container.innerHTML = "";
+      
+      criteria.forEach((criterion, index) => {
+        const div = document.createElement("div");
+        div.style.margin = "0.5em 0";
+        div.style.display = "flex";
+        div.style.gap = "0.5em";
+        div.style.alignItems = "center";
+        
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = criterion;
+        input.style.flex = "1";
+        input.onchange = function() {
+          criteria[index] = this.value;
+          saveData();
+        };
+        
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "×";
+        deleteBtn.style.padding = "0.3em 0.6em";
+        deleteBtn.onclick = function() {
+          if (confirm("Delete this criterion? All student ratings for this criterion will be lost.")) {
+            criteria.splice(index, 1);
+            students.forEach(student => {
+              student.ratings.splice(index, 1);
+              student.comments.splice(index, 1);
+              student.completed.splice(index, 1);
+            });
+            saveData();
+            renderCriteriaList();
+            renderApp();
+            renderSummary();
+          }
+        };
+        
+        div.appendChild(input);
+        div.appendChild(deleteBtn);
+        container.appendChild(div);
+      });
+    }
+
+    function addNewCriterion() {
+      const newCriterion = prompt("Enter new criterion name:");
+      if (newCriterion && newCriterion.trim()) {
+        criteria.push(newCriterion.trim());
+        students.forEach(student => {
+          student.ratings.push("Pass");
+          student.comments.push("");
+          student.completed.push(false);
+        });
+        saveData();
+        renderCriteriaList();
+        renderApp();
+        renderSummary();
+      }
+    }
+
+    function updateSelectedGrades() {
+      const checkboxes = document.getElementById("checkboxes");
+      selectedGrades = new Set(
+        Array.from(checkboxes.querySelectorAll('input:checked')).map(cb => cb.value)
+      );
+      
+      // Update dropdown to show correct selection
+      const gradeFilter = document.getElementById("gradeFilter");
+      if (selectedGrades.size === 0) {
+        gradeFilter.value = "All";
+      } else if (selectedGrades.size === 1) {
+        gradeFilter.value = Array.from(selectedGrades)[0];
+      } else {
+        gradeFilter.value = "All";
+      }
+      
+      renderApp();
+    }
+
+    function selectAllGrades() {
+      const checkboxes = document.getElementById("checkboxes");
+      Array.from(checkboxes.querySelectorAll('input')).forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      updateSelectedGrades();
+    }
+
+    function deselectAllGrades() {
+      const checkboxes = document.getElementById("checkboxes");
+      Array.from(checkboxes.querySelectorAll('input')).forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      updateSelectedGrades();
+    }
+
+    function updateGradeFilter() {
+      const select = document.getElementById("gradeFilter");
+      const checkboxes = document.getElementById("checkboxes");
+      
+      if (select.value === "All") {
+        selectAllGrades();
+      } else {
+        // Single grade selected from dropdown
+        selectedGrades = new Set([select.value]);
+        // Update checkboxes to match
+        Array.from(checkboxes.querySelectorAll('input')).forEach(checkbox => {
+          checkbox.checked = selectedGrades.has(checkbox.value);
+        });
+      }
+      renderApp();
+    }
+
+    function getSkill(grade, idx) {
+      const match = skillsByGrade.find(r => r.grade === grade);
+      return match ? match.skills[idx] || "" : "";
+    }
+
+    function saveData() {
+      const instructor = document.getElementById("instructorName").value || "instructor";
+      const grade = document.getElementById("gradeLevel").value || "ungraded";
+      const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+      
+      const dataKey = `${instructor}_${grade}_${date}`;
+      const data = {
+        students,
+        criteria,
+        skillsByGrade,
+        lastSaved: new Date().toISOString(),
+        instructor,
+        grade,
+        date
+      };
+      
+      localStorage.setItem(`karateGradingData_${dataKey}`, JSON.stringify(data));
+      
+      // Show save indicator
+      const indicator = document.createElement('div');
+      indicator.className = 'save-indicator';
+      indicator.textContent = '✓ Saved';
+      document.body.appendChild(indicator);
+      setTimeout(() => indicator.remove(), 2000);
+      
+      // Update summary view
+      renderSummary();
+    }
+
+    function createBackup() {
+      const instructor = document.getElementById("instructorName").value || "instructor";
+      const grade = document.getElementById("gradeLevel").value || "ungraded";
+      const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+      
+      const dataKey = `${instructor}_${grade}_${date}`;
+      const data = {
+        students,
+        criteria,
+        skillsByGrade,
+        timestamp: new Date().toISOString(),
+        instructor,
+        grade,
+        date
+      };
+      
+      backups.push(data);
+      if (backups.length > 5) {
+        backups.shift(); // Keep only last 5 backups
+      }
+      
+      localStorage.setItem(`karateGradingBackups_${dataKey}`, JSON.stringify(backups));
+      
+      alert(`Backup created successfully for ${grade} on ${date}. You have ${backups.length} backup(s) available.`);
+    }
+
+    function markCriteriaComplete(criterionIdx = null) {
+      const idx = criterionIdx !== null ? criterionIdx : currentCriteriaIndex;
+      const filteredStudents = getFilteredStudents();
+      
+      filteredStudents.forEach(student => {
+        student.completed[idx] = true;
+      });
+      
+      saveData();
+      renderApp();
+    }
+
+    function getFilteredStudents() {
+      const searchTerm = document.getElementById("searchBox").value.toLowerCase();
+      let filteredStudents = students;
+      
+      // Apply grade filter
+      if (selectedGrades.size > 0) {
+        filteredStudents = students.filter(s => selectedGrades.has(s.grade));
+      }
+      
+      // Apply search filter
+      if (searchTerm) {
+        filteredStudents = filteredStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
+      }
+      
+      return filteredStudents;
+    }
+
+    function renderApp() {
+      const container = document.getElementById("appContainer");
+      container.innerHTML = "";
+      
+      const filteredStudents = getFilteredStudents();
+
+      if (widescreen) {
+        renderGrid(container, filteredStudents);
+      } else {
+        renderSingleCriteria(container, filteredStudents);
+      }
+    }
+
+    function renderGrid(container, filteredStudents) {
+      const grouped = {};
+
+      filteredStudents.forEach(student => {
+        if (!grouped[student.grade]) grouped[student.grade] = [];
+        grouped[student.grade].push(student);
+      });
+
+      Object.keys(grouped).forEach(grade => {
+        grouped[grade].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      const tableContainer = document.createElement("div");
+      tableContainer.className = "grid-table-container";
+      const table = document.createElement("table");
+      table.className = "grid-table";
+
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      headerRow.innerHTML = "<th>Name</th>" + criteria.map(c => `<th>${c}</th>`).join("");
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+
+      Object.entries(grouped).forEach(([grade, studentsInGrade]) => {
+        const skillRow = document.createElement("tr");
+        skillRow.className = "grade-skill-row";
+        skillRow.innerHTML = `<td class="skill-text"><strong>Grade ${grade}</strong></td>` + 
+          criteria.map((_, idx) => `<td class="skill-text">${getSkill(grade, idx)}</td>`).join("");
+        tbody.appendChild(skillRow);
+
+        studentsInGrade.forEach((student, sIdx) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${student.name}</td>` + criteria.map((_, idx) => `
+            <td>
+              <select onchange="updateStudent(${sIdx}, ${idx}, 'rating', this.value)">
+                <option${student.ratings[idx]==='Excellent'?' selected':''}>Excellent</option>
+                <option${student.ratings[idx]==='Pass'?' selected':''}>Pass</option>
+                <option${student.ratings[idx]==='Needs Improvement'?' selected':''}>Needs Improvement</option>
+                <option${student.ratings[idx]==='Fail'?' selected':''}>Fail</option>
+              </select>
+              ${showComments ? `<br/><textarea placeholder="Comment..." rows="2" cols="20"
+                oninput="updateStudent(${sIdx}, ${idx}, 'comment', this.value)">${student.comments[idx]}</textarea>` : ''}
+            </td>`).join("");
+          tbody.appendChild(row);
+        });
+      });
+
+      // Add complete row at the bottom of the table
+      if (filteredStudents.length > 0 && criteria.length > 0) {
+        const completeRow = document.createElement("tr");
+        completeRow.className = "complete-row";
+        completeRow.innerHTML = `
+          <td><strong>Complete All</strong></td>
+          ${criteria.map((_, idx) => `
+            <td>
+              <button class="complete-btn ${filteredStudents.every(s => s.completed[idx]) ? 'completed' : ''}" 
+                onclick="markCriteriaComplete(${idx})">
+                ${filteredStudents.every(s => s.completed[idx]) ? '✓ Completed' : '✓ Complete'}
+              </button>
+            </td>
+          `).join('')}
+        `;
+        tbody.appendChild(completeRow);
+      }
+
+      table.appendChild(tbody);
+      tableContainer.appendChild(table);
+      container.appendChild(tableContainer);
+    }
+
+    function renderSingleCriteria(container, filteredStudents) {
+      if (!criteria.length) return;
+
+      // Progress indicator
+      const progressBar = document.createElement('div');
+      progressBar.className = 'progress-bar';
+      criteria.forEach((c, idx) => {
+        const dot = document.createElement('span');
+        dot.className = `progress-dot ${idx === currentCriteriaIndex ? 'active' : ''}`;
+        dot.title = c;
+        dot.onclick = () => {
+          currentCriteriaIndex = idx;
+          renderApp();
+        };
+        progressBar.appendChild(dot);
+      });
+
+      // Quick jump buttons
+      const jumpBar = document.createElement("div");
+      jumpBar.className = "quick-jump";
+      
+      // Previous button
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "secondary";
+      prevBtn.textContent = "◀ Previous";
+      prevBtn.onclick = () => {
+        if (currentCriteriaIndex > 0) {
+          currentCriteriaIndex--;
+          renderApp();
+        }
+      };
+      jumpBar.appendChild(prevBtn);
+      
+      // Current criteria display
+      const currentDisplay = document.createElement("span");
+      currentDisplay.textContent = criteria[currentCriteriaIndex];
+      currentDisplay.style.margin = "0 1em";
+      currentDisplay.style.alignSelf = "center";
+      jumpBar.appendChild(currentDisplay);
+      
+      // Next button
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "secondary";
+      nextBtn.textContent = "Next ▶";
+      nextBtn.onclick = () => {
+        if (currentCriteriaIndex < criteria.length - 1) {
+          currentCriteriaIndex++;
+          renderApp();
+        }
+      };
+      jumpBar.appendChild(nextBtn);
+
+      container.appendChild(jumpBar);
+      container.appendChild(progressBar);
+
+      // Student cards
+      const studentsContainer = document.createElement("div");
+      studentsContainer.className = "grid-container";
+      
+      filteredStudents.forEach((student, sIdx) => {
+        const card = document.createElement("div");
+        card.className = "student-card";
+        
+        let cardContent = `
+          <strong>${student.name}</strong><br/>
+          <em>Skill:</em> ${getSkill(student.grade, currentCriteriaIndex)}<br/>
+          <div class="rating-buttons">
+            <button class="rating-btn ${student.ratings[currentCriteriaIndex]==='Excellent'?'selected':''}" 
+              data-rating="Excellent" data-student="${sIdx}" data-criterion="${currentCriteriaIndex}">
+              👍 Excellent
+            </button>
+            <button class="rating-btn ${student.ratings[currentCriteriaIndex]==='Pass'?'selected':''}"
+              data-rating="Pass" data-student="${sIdx}" data-criterion="${currentCriteriaIndex}">
+              ✔ Pass
+            </button>
+            <button class="rating-btn ${student.ratings[currentCriteriaIndex]==='Needs Improvement'?'selected':''}"
+              data-rating="Needs Improvement" data-student="${sIdx}" data-criterion="${currentCriteriaIndex}">
+              ✋ Needs Work
+            </button>
+            <button class="rating-btn ${student.ratings[currentCriteriaIndex]==='Fail'?'selected':''}"
+              data-rating="Fail" data-student="${sIdx}" data-criterion="${currentCriteriaIndex}">
+              ❌ Fail
+            </button>
+          </div>
+        `;
+        
+        if (showComments) {
+          cardContent += `
+            <textarea placeholder="Comment..." class="comment-field"
+              data-student="${sIdx}" data-criterion="${currentCriteriaIndex}">
+              ${student.comments[currentCriteriaIndex]}
+            </textarea>
+          `;
+        }
+        
+        card.innerHTML = cardContent;
+        studentsContainer.appendChild(card);
+      });
+      
+      container.appendChild(studentsContainer);
+      
+      // Mark complete section (only show if there are students)
+      if (filteredStudents.length > 0) {
+        const completeSection = document.createElement("div");
+        completeSection.className = "complete-section";
+        completeSection.innerHTML = `
+          <button class="complete-btn ${filteredStudents.every(s => s.completed[currentCriteriaIndex]) ? 'completed' : ''}" 
+            onclick="markCriteriaComplete()">
+            ${filteredStudents.every(s => s.completed[currentCriteriaIndex]) ? '✓ Completed' : '✓ Complete'}
+          </button>
+          <p>Current criteria: ${criteria[currentCriteriaIndex]}</p>
+        `;
+        container.appendChild(completeSection);
+      }
+    }
+
+    function renderSummary() {
+      const summaryContainer = document.getElementById("summaryContainer");
+      summaryContainer.innerHTML = "<h3>Summary View</h3>";
+
+      if (students.length === 0) {
+        summaryContainer.innerHTML += "<p>No students to display</p>";
+        return;
+      }
+
+      students.forEach(student => {
+        const completedCount = student.completed.filter(c => c).length;
+        const totalCriteria = criteria.length;
+        const completedPercent = Math.round((completedCount / totalCriteria) * 100);
+
+        const card = document.createElement("div");
+        card.className = "student-card";
+        card.innerHTML = `
+          <strong>${student.name} (${student.grade})</strong>
+          <div>Progress: ${completedCount}/${totalCriteria} (${completedPercent}%)</div>
+          <div class="progress-bar">
+            ${criteria.map((_, idx) => `
+              <span class="progress-dot ${student.completed[idx] ? 'active' : ''}" 
+                title="${criteria[idx]}: ${student.ratings[idx]}"></span>
+            `).join('')}
+          </div>
+          <details>
+            <summary>Details</summary>
+            <ul>
+              ${criteria.map((c, idx) => `
+                <li>
+                  ${c}: <strong>${student.ratings[idx]}</strong>
+                  ${student.comments[idx] ? ` - "${student.comments[idx]}"` : ''}
+                  ${student.completed[idx] ? ' ✓' : ''}
+                </li>
+              `).join('')}
+            </ul>
+          </details>
+        `;
+        summaryContainer.appendChild(card);
+      });
+    }
+
+    function updateStudent(studentIdx, criterionIdx, type, value) {
+      if (type === 'rating') {
+        students[studentIdx].ratings[criterionIdx] = value;
+      } else if (type === 'comment') {
+        students[studentIdx].comments[criterionIdx] = value;
+      }
+      saveData();
+    }
+
+    function exportCSV() {
+      const instructor = document.getElementById("instructorName").value || "instructor";
+      const grade = document.getElementById("gradeLevel").value || "ungraded";
+      const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+      
+      let csv = [["Name", "Grade", ...criteria.flatMap(c => [c, `${c} Comment`, `${c} Completed`])]];
+
+      students.forEach(s => {
+        const row = [s.name, s.grade];
+        s.ratings.forEach((r, i) => {
+          row.push(r, s.comments[i] || "", s.completed[i] ? "Yes" : "No");
+        });
+        csv.push(row);
+      });
+
+      const blob = new Blob([csv.map(r => r.join(",")).join("\n")], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${instructor}_${grade}_grading_${date}.csv`;
+      link.click();
+    }
+
+    // Event delegation for rating buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('rating-btn')) {
+        const studentIdx = parseInt(e.target.dataset.student);
+        const criterionIdx = parseInt(e.target.dataset.criterion);
+        students[studentIdx].ratings[criterionIdx] = e.target.dataset.rating;
+        saveData();
+        renderApp();
+      }
+    });
+
+    // Event delegation for comment fields
+    document.addEventListener('input', function(e) {
+      if (e.target.classList.contains('comment-field')) {
+        const studentIdx = parseInt(e.target.dataset.student);
+        const criterionIdx = parseInt(e.target.dataset.criterion);
+        students[studentIdx].comments[criterionIdx] = e.target.value;
+        saveData();
+      }
+    });
+  </script>
+</body>
+</html>
