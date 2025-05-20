@@ -71,7 +71,71 @@
     .section h2.collapsed::after {
       transform: rotate(-90deg);
     }
-    
+      .criteria-details {
+    margin-top: 1em;
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.5em;
+  }
+  
+  .criterion-item {
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
+    border-bottom: 1px dashed var(--border-color);
+  }
+  
+  .criterion-item.completed {
+    opacity: 0.8;
+  }
+  
+  .criterion-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3em;
+  }
+  
+  .criterion-name {
+    font-weight: bold;
+    flex: 1;
+  }
+  
+  .criterion-rating {
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  
+  .criterion-rating.excellent {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .criterion-rating.pass {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  .criterion-rating.needs-improvement {
+    background-color: #FFC107;
+    color: #333;
+  }
+  
+  .criterion-rating.fail {
+    background-color: #F44336;
+    color: white;
+  }
+  
+  .criterion-comment {
+    background-color: #f9f9f9;
+    padding: 0.5em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-top: 0.3em;
+  }
+  
+  .criterion-comment em {
+    color: #666;
+    font-style: normal;
+  }
     .section-content {
       overflow: hidden;
       transition: max-height 0.3s ease-out;
@@ -1572,16 +1636,24 @@
             `).join('')}
           </div>
           <details>
-            <summary>Details</summary>
-            <ul>
+            <summary>View Details</summary>
+            <div class="criteria-details">
               ${criteria.map((c, idx) => `
-                <li>
-                  ${c}: <strong>${student.ratings[idx]}</strong>
-                  ${student.comments[idx] ? ` - "${student.comments[idx]}"` : ''}
-                  ${student.completed[idx] ? ' ✓' : ''}
-                </li>
+                <div class="criterion-item ${student.completed[idx] ? 'completed' : ''}">
+                  <div class="criterion-header">
+                    <span class="criterion-name">${c}</span>
+                    <span class="criterion-rating ${student.ratings[idx].toLowerCase().replace(' ', '-')}">
+                      ${student.ratings[idx]} ${student.completed[idx] ? '✓' : ''}
+                    </span>
+                  </div>
+                  ${student.comments[idx] ? `
+                    <div class="criterion-comment">
+                      <em>Comment:</em> ${student.comments[idx]}
+                    </div>
+                  ` : ''}
+                </div>
               `).join('')}
-            </ul>
+            </div>
           </details>
         `;
         summaryContainer.appendChild(card);
