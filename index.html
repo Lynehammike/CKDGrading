@@ -76,6 +76,29 @@
       overflow: hidden;
       transition: max-height 0.3s ease-out;
     }
+      .loading-indicator {
+    color: var(--primary-color);
+    font-size: 0.9em;
+    margin-top: 0.5em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  
+  .loading-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid rgba(200, 16, 46, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
     
     .section-content.collapsed {
       max-height: 0 !important;
@@ -578,7 +601,7 @@
 </head>
 <body>
   <header>
-    <h1>Cummings Karate Grading App</h1>
+    <h1>Cummings Karate Dojo Grading App</h1>
   </header>
 
   <div class="section" id="settingsSection">
@@ -603,24 +626,25 @@
       </div>
       
       <div class="file-input-container">
-        <label>Upload Students CSV:</label>
-        <label class="file-input-button">
-          Choose File
-          <input type="file" id="studentsFile" accept=".csv" onchange="updateFileName('studentsFile', 'studentsFileName')" />
-        </label>
-        <div id="studentsFileName" class="file-name">No file chosen</div>
-      </div>
+  <label>Upload Students CSV:</label>
+  <label class="file-input-button">
+    Choose File
+    <input type="file" id="studentsFile" accept=".csv" onchange="handleFileSelect('studentsFile', 'studentsFileName')" />
+  </label>
+  <div id="studentsFileName" class="file-name">No file chosen</div>
+  <div id="studentsLoading" class="loading-indicator" style="display: none;">Loading students...</div>
+</div>
+
+<div class="file-input-container">
+  <label>Upload Criteria CSV:</label>
+  <label class="file-input-button">
+    Choose File
+    <input type="file" id="criteriaFile" accept=".csv" onchange="handleFileSelect('criteriaFile', 'criteriaFileName')" />
+  </label>
+  <div id="criteriaFileName" class="file-name">No file chosen</div>
+  <div id="criteriaLoading" class="loading-indicator" style="display: none;">Loading criteria...</div>
+</div>
       
-      <div class="file-input-container">
-        <label>Upload Criteria CSV:</label>
-        <label class="file-input-button">
-          Choose File
-          <input type="file" id="criteriaFile" accept=".csv" onchange="updateFileName('criteriaFile', 'criteriaFileName')" />
-        </label>
-        <div id="criteriaFileName" class="file-name">No file chosen</div>
-      </div>
-      
-      <button class="primary" onclick="loadCSV()">Load Data</button>
       <button class="secondary" onclick="showClearDataModal()">Clear All Data</button>
       
       <div class="collapsible-section">
@@ -871,70 +895,97 @@
       return text.trim().split("\n").map(row => row.split(",").map(cell => cell.trim()));
     }
 
-    function loadCSV() {
-      const studentFile = document.getElementById('studentsFile').files[0];
-      const criteriaFile = document.getElementById('criteriaFile').files[0];
-      
-      if (!criteriaFile) {
-        alert("Please upload the criteria file.");
-        return;
-      }
-
-      // Load criteria first
-      criteriaFile.text().then(text => {
+  async function loadCSV() {
+    const studentFile = document.getElementById('studentsFile').files[0];
+    const criteriaFile = document.getElementById('criteriaFile').files[0];
+    
+    // Show loading indicators
+    if (studentFile) document.getElementById('studentsLoading').style.display = 'flex';
+    if (criteriaFile) document.getElementById('criteriaLoading').style.display = 'flex';
+    
+    try {
+      // Load criteria first if provided
+      if (criteriaFile) {
+        const text = await criteriaFile.text();
         const criteriaData = parseCSV(text);
         const [cHeaders, ...cRows] = criteriaData;
         criteria = cHeaders.slice(2);
         skillsByGrade = cRows.map(r => ({ grade: r[0], skills: r.slice(2) }));
-
-        // Then load students if provided
-        if (studentFile) {
-          studentFile.text().then(text => {
-            const studentData = parseCSV(text);
-            const [_, ...sRows] = studentData;
-            
-            students = sRows.map(row => ({
-              name: row[0],
-              grade: row[1],
-              ratings: criteria.map(() => "Pass"),
-              comments: criteria.map(() => ""),
-              completed: criteria.map(() => false)
-            }));
-
-            // Try to merge with existing data
-            const instructor = document.getElementById("instructorName").value || "instructor";
-            const grade = document.getElementById("gradeLevel").value || "ungraded";
-            const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
-            const dataKey = `${instructor}_${grade}_${date}`;
-            
-            const savedData = localStorage.getItem(`karateGradingData_${dataKey}`);
-            if (savedData) {
-              const parsed = JSON.parse(savedData);
-              if (parsed.students.length === students.length) {
-                students.forEach((student, i) => {
-                  student.ratings = parsed.students[i].ratings;
-                  student.comments = parsed.students[i].comments;
-                  student.completed = parsed.students[i].completed;
-                });
-              }
-            }
-
-            saveData();
-            saveSettings();
-            populateGradeFilter();
-            renderApp();
-            renderCriteriaList();
-          });
-        } else {
-          // No student file, just update with criteria
-          saveData();
-          saveSettings();
-          populateGradeFilter();
-          renderApp();
-          renderCriteriaList();
+        document.getElementById('criteriaLoading').style.display = 'none';
+      }
+      
+      // Then load students if provided
+      if (studentFile) {
+        const text = await studentFile.text();
+        const studentData = parseCSV(text);
+        const [_, ...sRows] = studentData;
+        
+        students = sRows.map(row => ({
+          name: row[0],
+          grade: row[1],
+          ratings: criteria.map(() => "Pass"),
+          comments: criteria.map(() => ""),
+          completed: criteria.map(() => false)
+        }));
+        
+        // Try to merge with existing data
+        const instructor = document.getElementById("instructorName").value || "instructor";
+        const grade = document.getElementById("gradeLevel").value || "ungraded";
+        const date = document.getElementById("assessmentDate").value || new Date().toISOString().split('T')[0];
+        const dataKey = `${instructor}_${grade}_${date}`;
+        
+        const savedData = localStorage.getItem(`karateGradingData_${dataKey}`);
+        if (savedData) {
+          const parsed = JSON.parse(savedData);
+          if (parsed.students.length === students.length) {
+            students.forEach((student, i) => {
+              student.ratings = parsed.students[i].ratings;
+              student.comments = parsed.students[i].comments;
+              student.completed = parsed.students[i].completed;
+            });
+          }
         }
-      });
+        
+        document.getElementById('studentsLoading').style.display = 'none';
+      }
+      
+      saveData();
+      saveSettings();
+      populateGradeFilter();
+      renderApp();
+      renderCriteriaList();
+      
+    } catch (error) {
+      console.error("Error loading files:", error);
+      alert("Error loading files. Please check the file format and try again.");
+      document.getElementById('studentsLoading').style.display = 'none';
+      document.getElementById('criteriaLoading').style.display = 'none';
     }
+  }
+
+  // New function to handle file selection
+  function handleFileSelect(inputId, displayId) {
+    const input = document.getElementById(inputId);
+    const display = document.getElementById(displayId);
+    
+    if (input.files.length > 0) {
+      display.textContent = input.files[0].name;
+      settingsChanged = true;
+      saveSettings();
+      
+      // Automatically trigger loading if both files are selected
+      const studentFile = document.getElementById('studentsFile').files[0];
+      const criteriaFile = document.getElementById('criteriaFile').files[0];
+      
+      if ((inputId === 'studentsFile' && criteriaFile) || 
+          (inputId === 'criteriaFile' && studentFile) ||
+          (studentFile && criteriaFile)) {
+        loadCSV();
+      }
+    } else {
+      display.textContent = "No file chosen";
+    }
+  }
 
     function addManualStudent() {
       const name = document.getElementById('manualStudentName').value.trim();
