@@ -431,7 +431,66 @@
       margin: 1em 0;
       display: none;
     }
+
+      .grid-table-container {
+    overflow-x: auto;
+    width: 100%;
+    margin-bottom: 1em;
+    position: relative;
+  }
+  
+  .grid-table {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .grid-table th:first-child,
+  .grid-table td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 2;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  }
+  
+  .grid-table .grade-skill-row td:first-child {
+    background-color: var(--grade-row-bg);
+  }
+  
+  .grid-table th {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 3;
+  }
+  
+  .grid-table th:first-child {
+    z-index: 4;
+  }
     
+    .student-name-cell {
+  min-width: 150px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.student-grade {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 4px;
+}
+
+.grid-table th {
+  padding: 12px;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: normal;
+}
+
+.grid-table td {
+  padding: 8px 12px;
+  vertical-align: top;
+}
     .modal {
       display: none;
       position: fixed;
@@ -1251,48 +1310,53 @@
 
       const tableContainer = document.createElement("div");
       tableContainer.className = "grid-table-container";
+      
       const table = document.createElement("table");
       table.className = "grid-table";
 
+      // Create table header
       const thead = document.createElement("thead");
       const headerRow = document.createElement("tr");
-      headerRow.innerHTML = "<th>Name</th>" + criteria.map(c => `<th>${c}</th>`).join("");
+      headerRow.innerHTML = "<th>Student Name</th>" + criteria.map(c => `<th>${c}</th>`).join("");
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
       const tbody = document.createElement("tbody");
 
       Object.entries(grouped).forEach(([studentGrade, studentsInGrade]) => {
-        // Find the closest matching curriculum grade
-        const curriculumGrade = skillsByGrade.find(r => 
-          r.grade.includes(studentGrade) || studentGrade.includes(r.grade)
-        )?.grade || studentGrade;
-        
+        // Grade skills row
         const skillRow = document.createElement("tr");
         skillRow.className = "grade-skill-row";
-        skillRow.innerHTML = `<td class="skill-text"><strong>${studentGrade}</strong></td>` + 
+        skillRow.innerHTML = `<td><strong>Grade ${studentGrade}</strong></td>` + 
           criteria.map((_, idx) => `<td class="skill-text">${getSkill(studentGrade, idx)}</td>`).join("");
         tbody.appendChild(skillRow);
 
+        // Student rows
         studentsInGrade.forEach((student, sIdx) => {
           const row = document.createElement("tr");
-          row.innerHTML = `<td>${student.name}</td>` + criteria.map((_, idx) => `
-            <td>
-              <select onchange="updateStudent(${sIdx}, ${idx}, 'rating', this.value)">
-                <option${student.ratings[idx]==='Excellent'?' selected':''}>Excellent</option>
-                <option${student.ratings[idx]==='Pass'?' selected':''}>Pass</option>
-                <option${student.ratings[idx]==='Needs Improvement'?' selected':''}>Needs Improvement</option>
-                <option${student.ratings[idx]==='Fail'?' selected':''}>Fail</option>
-              </select>
-              ${showComments ? `<br/><textarea placeholder="Comment..." rows="2" cols="20"
-                oninput="updateStudent(${sIdx}, ${idx}, 'comment', this.value)">${student.comments[idx]}</textarea>` : ''}
-            </td>`).join("");
+          row.innerHTML = `
+            <td class="student-name-cell">
+              ${student.name}
+              <div class="student-grade">${student.grade}</div>
+            </td>
+            ` + 
+            criteria.map((_, idx) => `
+              <td>
+                <select onchange="updateStudent(${sIdx}, ${idx}, 'rating', this.value)">
+                  <option${student.ratings[idx]==='Excellent'?' selected':''}>Excellent</option>
+                  <option${student.ratings[idx]==='Pass'?' selected':''}>Pass</option>
+                  <option${student.ratings[idx]==='Needs Improvement'?' selected':''}>Needs Improvement</option>
+                  <option${student.ratings[idx]==='Fail'?' selected':''}>Fail</option>
+                </select>
+                ${showComments ? `<br/><textarea placeholder="Comment..." rows="2" cols="20"
+                  oninput="updateStudent(${sIdx}, ${idx}, 'comment', this.value)">${student.comments[idx]}</textarea>` : ''}
+              </td>
+            `).join("");
           tbody.appendChild(row);
         });
       });
 
-
-      // Add complete row at the bottom of the table
+      // Complete row
       if (filteredStudents.length > 0 && criteria.length > 0) {
         const completeRow = document.createElement("tr");
         completeRow.className = "complete-row";
